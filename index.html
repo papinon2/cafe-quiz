@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>あなたにぴったりのカフェメニュー診断</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Serif+JP:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5efe6;
+    --espresso: #2c1810;
+    --latte: #c4956a;
+    --foam: #faf6f0;
+    --mocha: #6b3f2a;
+    --mint: #4a7c6f;
+    --caramel: #d4a853;
+    --rose: #c17b7b;
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background-color: var(–cream);
+color: var(–espresso);
+font-family: ‘Noto Serif JP’, serif;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* Grain overlay */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.04’/%3E%3C/svg%3E”);
+pointer-events: none;
+z-index: 100;
+opacity: 0.5;
+}
+
+.container {
+max-width: 680px;
+margin: 0 auto;
+padding: 2rem 1.5rem 4rem;
+}
+
+/* Header */
+header {
+text-align: center;
+padding: 3rem 0 2.5rem;
+position: relative;
+}
+
+.cafe-icon {
+font-size: 2.5rem;
+display: block;
+margin-bottom: 1rem;
+animation: steam 3s ease-in-out infinite;
+}
+
+@keyframes steam {
+0%, 100% { transform: translateY(0); }
+50% { transform: translateY(-6px); }
+}
+
+header h1 {
+font-family: ‘Playfair Display’, serif;
+font-size: clamp(1.5rem, 5vw, 2.2rem);
+font-weight: 700;
+line-height: 1.3;
+color: var(–espresso);
+margin-bottom: 0.5rem;
+}
+
+header h1 em {
+font-style: italic;
+color: var(–mocha);
+}
+
+header p {
+font-size: 0.85rem;
+color: var(–latte);
+font-weight: 300;
+letter-spacing: 0.05em;
+}
+
+.divider {
+display: flex;
+align-items: center;
+gap: 1rem;
+margin: 1.5rem 0;
+}
+
+.divider::before, .divider::after {
+content: ‘’;
+flex: 1;
+height: 1px;
+background: var(–latte);
+opacity: 0.4;
+}
+
+.divider span {
+color: var(–latte);
+font-size: 0.7rem;
+letter-spacing: 0.2em;
+text-transform: uppercase;
+}
+
+/* Progress */
+.progress-wrap {
+margin-bottom: 2rem;
+}
+
+.progress-info {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 0.5rem;
+font-size: 0.75rem;
+color: var(–latte);
+font-weight: 300;
+}
+
+.progress-bar {
+height: 3px;
+background: rgba(196, 149, 106, 0.2);
+border-radius: 99px;
+overflow: hidden;
+}
+
+.progress-fill {
+height: 100%;
+background: linear-gradient(90deg, var(–latte), var(–caramel));
+border-radius: 99px;
+transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Question card */
+.question-card {
+background: var(–foam);
+border-radius: 20px;
+padding: 2rem;
+box-shadow: 0 8px 40px rgba(44, 24, 16, 0.08), 0 2px 8px rgba(44, 24, 16, 0.04);
+animation: fadeUp 0.5s ease forwards;
+border: 1px solid rgba(196, 149, 106, 0.15);
+}
+
+@keyframes fadeUp {
+from { opacity: 0; transform: translateY(20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.q-number {
+font-size: 0.7rem;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+color: var(–latte);
+margin-bottom: 0.75rem;
+display: block;
+}
+
+.q-text {
+font-size: clamp(1rem, 3vw, 1.15rem);
+font-weight: 600;
+line-height: 1.6;
+margin-bottom: 1.5rem;
+color: var(–espresso);
+}
+
+/* Options */
+.options {
+display: flex;
+flex-direction: column;
+gap: 0.75rem;
+}
+
+.option-btn {
+background: white;
+border: 1.5px solid rgba(196, 149, 106, 0.25);
+border-radius: 12px;
+padding: 0.9rem 1.2rem;
+text-align: left;
+cursor: pointer;
+font-family: ‘Noto Serif JP’, serif;
+font-size: 0.9rem;
+color: var(–espresso);
+transition: all 0.25s ease;
+display: flex;
+align-items: center;
+gap: 0.75rem;
+}
+
+.option-btn:hover {
+border-color: var(–latte);
+background: rgba(196, 149, 106, 0.06);
+transform: translateX(4px);
+}
+
+.option-btn.selected {
+border-color: var(–latte);
+background: rgba(196, 149, 106, 0.12);
+}
+
+.opt-icon {
+font-size: 1.1rem;
+flex-shrink: 0;
+}
+
+/* Start / Result screens */
+.screen {
+text-align: center;
+animation: fadeUp 0.6s ease forwards;
+}
+
+.start-btn, .retry-btn {
+display: inline-block;
+margin-top: 2rem;
+padding: 0.9rem 2.5rem;
+background: var(–espresso);
+color: var(–cream);
+border: none;
+border-radius: 99px;
+font-family: ‘Noto Serif JP’, serif;
+font-size: 0.95rem;
+cursor: pointer;
+letter-spacing: 0.05em;
+transition: all 0.3s ease;
+box-shadow: 0 4px 20px rgba(44, 24, 16, 0.25);
+}
+
+.start-btn:hover, .retry-btn:hover {
+background: var(–mocha);
+transform: translateY(-2px);
+box-shadow: 0 8px 30px rgba(44, 24, 16, 0.3);
+}
+
+.start-desc {
+font-size: 0.9rem;
+line-height: 1.8;
+color: var(–mocha);
+font-weight: 300;
+max-width: 420px;
+margin: 0 auto;
+}
+
+/* Result */
+.result-emoji {
+font-size: 4rem;
+display: block;
+margin: 1rem auto;
+animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes pop {
+0% { transform: scale(0); }
+100% { transform: scale(1); }
+}
+
+.result-label {
+font-size: 0.75rem;
+letter-spacing: 0.2em;
+text-transform: uppercase;
+color: var(–latte);
+margin-bottom: 0.5rem;
+}
+
+.result-title {
+font-family: ‘Playfair Display’, serif;
+font-size: clamp(1.8rem, 6vw, 2.8rem);
+font-weight: 700;
+color: var(–espresso);
+margin-bottom: 0.5rem;
+}
+
+.result-subtitle {
+font-style: italic;
+color: var(–mocha);
+font-size: 1rem;
+margin-bottom: 1.5rem;
+}
+
+.result-desc {
+background: var(–foam);
+border: 1px solid rgba(196, 149, 106, 0.2);
+border-radius: 16px;
+padding: 1.5rem;
+font-size: 0.9rem;
+line-height: 1.9;
+color: var(–espresso);
+text-align: left;
+margin-bottom: 1.5rem;
+}
+
+.result-tags {
+display: flex;
+flex-wrap: wrap;
+gap: 0.5rem;
+justify-content: center;
+margin-bottom: 0.5rem;
+}
+
+.tag {
+padding: 0.3rem 0.9rem;
+border-radius: 99px;
+font-size: 0.75rem;
+font-weight: 600;
+letter-spacing: 0.05em;
+}
+
+.hidden { display: none; }
+</style>
+
+</head>
+<body>
+<div class="container">
+  <header>
+    <span class="cafe-icon">☕</span>
+    <h1>あなたにぴったりの<br><em>カフェメニュー</em>診断</h1>
+    <p>12の質問でわかる、あなたの一杯</p>
+  </header>
+
+  <!-- Start Screen -->
+
+  <div id="start-screen" class="screen">
+    <div class="divider"><span>menu</span></div>
+    <p class="start-desc">
+      毎日の気分や習慣から、<br>
+      あなたの心と体が求めているカフェメニューを診断します。<br>
+      正直に、直感で答えてください。
+    </p>
+    <button class="start-btn" onclick="startQuiz()">診断スタート ✦</button>
+  </div>
+
+  <!-- Quiz Screen -->
+
+  <div id="quiz-screen" class="hidden">
+    <div class="progress-wrap">
+      <div class="progress-info">
+        <span id="q-counter">1 / 12</span>
+        <span id="q-label">回答中...</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="question-card" id="question-card">
+      <span class="q-number" id="q-number">Question 01</span>
+      <p class="q-text" id="q-text"></p>
+      <div class="options" id="options"></div>
+    </div>
+  </div>
+
+  <!-- Result Screen -->
+
+  <div id="result-screen" class="hidden screen">
+    <div class="divider"><span>your result</span></div>
+    <span class="result-emoji" id="result-emoji"></span>
+    <p class="result-label">あなたのカフェメニューは</p>
+    <h2 class="result-title" id="result-title"></h2>
+    <p class="result-subtitle" id="result-subtitle"></p>
+    <div class="result-desc" id="result-desc"></div>
+    <div class="result-tags" id="result-tags"></div>
+    <button class="retry-btn" onclick="retryQuiz()">もう一度診断する</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    text: "朝、目が覚めたとき最初にしたいことは？",
+    options: [
+      { icon: "☀️", text: "窓を開けて深呼吸する", scores: { hot: 2, classic: 1 } },
+      { icon: "📱", text: "スマホをチェックする", scores: { trendy: 2, cold: 1 } },
+      { icon: "🛌", text: "もう少し横になっていたい", scores: { sweet: 2, smooth: 1 } },
+      { icon: "🏃", text: "すぐに動き出す", scores: { strong: 2, cold: 1 } },
+    ]
+  },
+  {
+    text: "週末の過ごし方に近いのは？",
+    options: [
+      { icon: "📚", text: "家でゆっくり読書や映画", scores: { classic: 2, hot: 1 } },
+      { icon: "🌿", text: "自然の中でリフレッシュ", scores: { hot: 2, smooth: 1 } },
+      { icon: "🎉", text: "友達と賑やかに過ごす", scores: { sweet: 2, trendy: 1 } },
+      { icon: "🎨", text: "新しいことに挑戦する", scores: { trendy: 2, strong: 1 } },
+    ]
+  },
+  {
+    text: "好きな季節は？",
+    options: [
+      { icon: "🌸", text: "春（やわらかく穏やか）", scores: { smooth: 2, sweet: 1 } },
+      { icon: "☀️", text: "夏（元気でパワフル）", scores: { cold: 2, strong: 1 } },
+      { icon: "🍂", text: "秋（深みがあって落ち着く）", scores: { classic: 2, hot: 1 } },
+      { icon: "❄️", text: "冬（澄んでいて静かな）", scores: { hot: 2, classic: 1 } },
+    ]
+  },
+  {
+    text: "カフェで席を選ぶとしたら？",
+    options: [
+      { icon: "🪟", text: "窓際で外の景色を眺めながら", scores: { smooth: 2, classic: 1 } },
+      { icon: "📖", text: "隅の静かな席でひとり集中", scores: { strong: 2, hot: 1 } },
+      { icon: "👥", text: "友達と話しやすいテーブル席", scores: { sweet: 2, trendy: 1 } },
+      { icon: "💻", text: "電源がある作業しやすい席", scores: { cold: 2, strong: 1 } },
+    ]
+  },
+  {
+    text: "ストレスを感じたとき、どうやって解消する？",
+    options: [
+      { icon: "🎵", text: "音楽を聴いてぼーっとする", scores: { smooth: 2, hot: 1 } },
+      { icon: "🍰", text: "甘いものを食べる", scores: { sweet: 3 } },
+      { icon: "💪", text: "運動や散歩をする", scores: { cold: 2, strong: 1 } },
+      { icon: "💬", text: "誰かに話を聞いてもらう", scores: { trendy: 2, sweet: 1 } },
+    ]
+  },
+  {
+    text: "自分の性格に一番近いのは？",
+    options: [
+      { icon: "🌙", text: "落ち着いていて、マイペース", scores: { classic: 2, hot: 1 } },
+      { icon: "⚡", text: "行動力があって、熱い", scores: { strong: 2, cold: 1 } },
+      { icon: "🌈", text: "明るくて、周りを元気にする", scores: { sweet: 2, trendy: 1 } },
+      { icon: "🔍", text: "好奇心旺盛で、新しもの好き", scores: { trendy: 2, cold: 1 } },
+    ]
+  },
+  {
+    text: "旅行するなら、どんな場所？",
+    options: [
+      { icon: "🏙️", text: "都会の最先端スポット", scores: { trendy: 2, cold: 1 } },
+      { icon: "🌿", text: "緑豊かな山や森", scores: { hot: 2, classic: 1 } },
+      { icon: "🏖️", text: "開放的なビーチリゾート", scores: { cold: 2, sweet: 1 } },
+      { icon: "🏘️", text: "歴史ある古い街並み", scores: { classic: 2, smooth: 1 } },
+    ]
+  },
+  {
+    text: "飲み物を選ぶとき、大事にしているのは？",
+    options: [
+      { icon: "✨", text: "見た目がおしゃれかどうか", scores: { trendy: 2, sweet: 1 } },
+      { icon: "🍃", text: "体に良さそうかどうか", scores: { hot: 2, smooth: 1 } },
+      { icon: "💥", text: "目が覚めるような刺激感", scores: { strong: 2, cold: 1 } },
+      { icon: "🤗", text: "ほっとする安心感", scores: { classic: 2, hot: 1 } },
+    ]
+  },
+  {
+    text: "一日の中で一番元気な時間帯は？",
+    options: [
+      { icon: "🌅", text: "朝（活動のゴールデンタイム）", scores: { strong: 2, cold: 1 } },
+      { icon: "🌞", text: "昼（集中力がピーク）", scores: { classic: 2, hot: 1 } },
+      { icon: "🌆", text: "夕方（ゆったり過ごせる）", scores: { smooth: 2, sweet: 1 } },
+      { icon: "🌙", text: "夜（本領発揮）", scores: { trendy: 2, cold: 1 } },
+    ]
+  },
+  {
+    text: "ファッションのスタイルに近いのは？",
+    options: [
+      { icon: "👔", text: "シンプルで洗練されたきれいめ", scores: { classic: 2, smooth: 1 } },
+      { icon: "🧢", text: "カジュアルで動きやすい", scores: { cold: 2, strong: 1 } },
+      { icon: "🌸", text: "かわいくてガーリー", scores: { sweet: 2, trendy: 1 } },
+      { icon: "🖤", text: "個性的でちょっと変わってる", scores: { trendy: 2, strong: 1 } },
+    ]
+  },
+  {
+    text: "理想の「くつろぎの場所」は？",
+    options: [
+      { icon: "🛋️", text: "自分だけのソファスペース", scores: { classic: 2, smooth: 1 } },
+      { icon: "🌳", text: "緑あふれる庭やテラス", scores: { hot: 2, smooth: 1 } },
+      { icon: "🏠", text: "友達が集まるにぎやかなリビング", scores: { sweet: 2, trendy: 1 } },
+      { icon: "🌊", text: "自然の中のひと気のない場所", scores: { cold: 2, strong: 1 } },
+    ]
+  },
+  {
+    text: "人生のモットーに近いのは？",
+    options: [
+      { icon: "🌱", text: "ゆっくり、着実に", scores: { classic: 2, hot: 1 } },
+      { icon: "🔥", text: "熱く、全力で", scores: { strong: 3 } },
+      { icon: "🌈", text: "楽しく、明るく", scores: { sweet: 2, trendy: 1 } },
+      { icon: "🌀", text: "自由に、自分らしく", scores: { trendy: 2, cold: 1 } },
+    ]
+  }
+];
+
+const results = {
+  classic: {
+    emoji: "☕",
+    title: "ブレンドコーヒー",
+    subtitle: "The Classic — 時代を超えた定番の一杯",
+    desc: "あなたはブレンドコーヒーのような人。流行に左右されず、自分のペースをしっかり守る落ち着いたタイプです。シンプルの中に深みがあり、一緒にいると不思議と安心できる存在感があります。毎朝の一杯のように、人々の日常に欠かせない存在になっていることが多いでしょう。",
+    tags: ["落ち着き", "安定感", "誠実", "マイペース"],
+    tagColors: ["#6b3f2a", "#c4956a", "#4a7c6f", "#c17b7b"]
+  },
+  hot: {
+    emoji: "🍵",
+    title: "抹茶ラテ",
+    subtitle: "The Natural — 繊細さと深みを持つ",
+    desc: "あなたは抹茶ラテのような人。自然体でありながら、どこか奥深い魅力を持っています。内側に豊かな感受性を持ち、心の安らぎを大切にするタイプ。じっくり時間をかけて人と関わり、本質的なつながりを求めます。一見とっつきにくくても、知れば知るほど好きになる、そんな存在です。",
+    tags: ["自然体", "感受性豊か", "本質重視", "穏やか"],
+    tagColors: ["#4a7c6f", "#c4956a", "#6b3f2a", "#4a7c6f"]
+  },
+  sweet: {
+    emoji: "🍮",
+    title: "キャラメルラテ",
+    subtitle: "The Sunshine — その場を明るくする甘い存在",
+    desc: "あなたはキャラメルラテのような人。甘くて温かく、周りを笑顔にする天性のムードメーカーです。人と関わることが大好きで、誰とでも自然と仲良くなれるコミュニケーション力の持ち主。ほんのり苦いコーヒーベースがあるように、実は芯のある強さも持ち合わせています。",
+    tags: ["社交的", "明るい", "思いやり", "感情豊か"],
+    tagColors: ["#d4a853", "#c17b7b", "#c4956a", "#d4a853"]
+  },
+  strong: {
+    emoji: "⚡",
+    title: "ダブルエスプレッソ",
+    subtitle: "The Powerhouse — 圧倒的な集中力と熱量",
+    desc: "あなたはダブルエスプレッソのような人。少量でも圧倒的な存在感とエネルギーを放ちます。目標に向かって一直線に突き進む行動力と、揺るがない信念が魅力。妥協を嫌い、常に本気でぶつかっていく姿勢が周囲に刺激を与えます。一緒にいると何かやってやろうという気持ちになれる、そんな人です。",
+    tags: ["行動力", "集中力", "情熱", "リーダー気質"],
+    tagColors: ["#2c1810", "#6b3f2a", "#c4956a", "#2c1810"]
+  },
+  cold: {
+    emoji: "🧊",
+    title: "アイスコーヒー",
+    subtitle: "The Cool Head — クールで頼れる存在",
+    desc: "あなたはアイスコーヒーのような人。クールに見えて、内側にしっかりとした熱を秘めています。論理的で判断が早く、どんな状況でも冷静さを保てる頼もしさが魅力。夏の強い日差しの中でも爽快感を保つように、プレッシャーのかかる場面でこそ本領を発揮するタイプです。",
+    tags: ["クール", "論理的", "頼もしい", "効率重視"],
+    tagColors: ["#4a7c6f", "#2c1810", "#6b3f2a", "#4a7c6f"]
+  },
+  trendy: {
+    emoji: "🫧",
+    title: "クラフトコーヒー",
+    subtitle: "The Trendsetter — 常に時代の一歩先を行く",
+    desc: "あなたはクラフトコーヒーのような人。新しいものへの好奇心が旺盛で、常にトレンドの最前線にいます。独自のこだわりと審美眼を持ち、個性を大切にします。人と同じことを嫌い、自分だけのスタイルを追求し続ける姿が周りに刺激を与え、自然とトレンドセッターになっていることも多いでしょう。",
+    tags: ["好奇心旺盛", "個性的", "クリエイティブ", "トレンド感"],
+    tagColors: ["#d4a853", "#c17b7b", "#6b3f2a", "#c4956a"]
+  },
+  smooth: {
+    emoji: "🥛",
+    title: "カフェラテ",
+    subtitle: "The Harmonizer — やわらかく、誰にでも寄り添う",
+    desc: "あなたはカフェラテのような人。コーヒーとミルクが自然に溶け合うように、どんな人ともうまく調和できる柔軟性を持っています。穏やかで優しく、相手の気持ちを敏感に読み取る共感力が高いタイプ。あなたのそばにいると、不思議とほっとして本音が話せる、そんな心地よさを与えてくれる存在です。",
+    tags: ["共感力", "協調性", "柔軟", "思いやり"],
+    tagColors: ["#c17b7b", "#c4956a", "#4a7c6f", "#d4a853"]
+  }
+};
+
+let currentQ = 0;
+let scores = { classic: 0, hot: 0, sweet: 0, strong: 0, cold: 0, trendy: 0, smooth: 0 };
+
+function startQuiz() {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('quiz-screen').classList.remove('hidden');
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('q-counter').textContent = `${currentQ + 1} / ${questions.length}`;
+  document.getElementById('q-number').textContent = `Question ${String(currentQ + 1).padStart(2, '0')}`;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('progress-fill').style.width = `${(currentQ / questions.length) * 100}%`;
+
+  const card = document.getElementById('question-card');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = 'fadeUp 0.4s ease forwards';
+
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-icon">${opt.icon}</span><span>${opt.text}</span>`;
+    btn.onclick = () => selectOption(opt.scores);
+    opts.appendChild(btn);
+  });
+}
+
+function selectOption(optScores) {
+  Object.entries(optScores).forEach(([key, val]) => {
+    scores[key] = (scores[key] || 0) + val;
+  });
+  currentQ++;
+  if (currentQ < questions.length) {
+    showQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz-screen').classList.add('hidden');
+  document.getElementById('progress-fill').style.width = '100%';
+
+  const top = Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
+  const r = results[top];
+
+  document.getElementById('result-emoji').textContent = r.emoji;
+  document.getElementById('result-title').textContent = r.title;
+  document.getElementById('result-subtitle').textContent = r.subtitle;
+  document.getElementById('result-desc').textContent = r.desc;
+
+  const tagsEl = document.getElementById('result-tags');
+  tagsEl.innerHTML = '';
+  r.tags.forEach((tag, i) => {
+    const span = document.createElement('span');
+    span.className = 'tag';
+    span.textContent = `# ${tag}`;
+    span.style.background = r.tagColors[i] + '18';
+    span.style.color = r.tagColors[i];
+    span.style.border = `1px solid ${r.tagColors[i]}40`;
+    tagsEl.appendChild(span);
+  });
+
+  const res = document.getElementById('result-screen');
+  res.classList.remove('hidden');
+  res.style.animation = 'none';
+  res.offsetHeight;
+  res.style.animation = 'fadeUp 0.6s ease forwards';
+}
+
+function retryQuiz() {
+  currentQ = 0;
+  scores = { classic: 0, hot: 0, sweet: 0, strong: 0, cold: 0, trendy: 0, smooth: 0 };
+  document.getElementById('result-screen').classList.add('hidden');
+  document.getElementById('quiz-screen').classList.remove('hidden');
+  showQuestion();
+}
+</script>
+
+</body>
+</html>
